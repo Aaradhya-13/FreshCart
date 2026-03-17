@@ -1,15 +1,12 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const crypto = require('crypto');
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ─── Password Protection Config ───
-const SITE_PASSWORD = process.env.SITE_PASSWORD || '1234';
-const AUTH_COOKIE = 'fc_auth';
-const AUTH_TOKEN = crypto.createHash('sha256').update(SITE_PASSWORD).digest('hex').slice(0, 16);
+
 
 // Middleware
 app.use(cors());
@@ -36,28 +33,7 @@ app.post('/auth/logout', (req, res) => {
   res.json({ success: true });
 });
 
-// Password protection middleware
-function requireAuth(req, res, next) {
-  // Parse cookies manually (no cookie-parser dependency needed)
-  const cookies = {};
-  (req.headers.cookie || '').split(';').forEach(c => {
-    const [key, val] = c.trim().split('=');
-    if (key) cookies[key] = val;
-  });
 
-  if (cookies[AUTH_COOKIE] === AUTH_TOKEN) {
-    return next();
-  }
-
-  // Show the password gate page
-  res.send(getPasswordPage());
-}
-
-// Apply auth to all non-auth routes
-app.use((req, res, next) => {
-  if (req.path.startsWith('/auth/')) return next();
-  requireAuth(req, res, next);
-});
 
 // Serve static frontend files
 app.use(express.static(path.join(__dirname, 'public')));
